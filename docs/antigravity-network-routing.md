@@ -102,6 +102,37 @@ prove that a previous long conversation will succeed under concurrent load.
 Google documents capacity-dependent limits in its
 [Antigravity plans documentation](https://antigravity.google/docs/plans).
 
+## Scheduling policy for repeated 429 responses
+
+The deployment uses this routing policy to avoid retrying an already failing
+credential repeatedly within one client request:
+
+```yaml
+routing:
+  strategy: round-robin
+  session-affinity: false
+  retry:
+    request-retry: 0
+    max-retry-credentials: 0
+    max-retry-interval: 0
+  cooldown:
+    disable-cooling: false
+```
+
+`request-retry: 0` disables additional credential retry rounds. The initial round
+can still try every eligible credential because `max-retry-credentials: 0`
+does not cap that round's credential count. `max-retry-interval: 0` prevents a
+request from waiting for a cooled credential between rounds. Already cooling
+credentials remain excluded, and callers must respect cooldown responses rather
+than immediately resubmitting the same request.
+
+All 12 existing Antigravity credential files also have `request_retry: 0` set
+through the credential-fields management API. That field takes precedence over
+the global setting. This policy reduces repeated attempts; it does not create
+another account supporting Carbon or remove upstream limits. It does not add a
+per-account request queue: the inspected credential-concurrency lifecycle settings
+belong to Home mode and do not provide a standalone queue for this deployment.
+
 ## Verify generation
 
 Verify the persisted setting, then test through CPA itself, rather than relying
