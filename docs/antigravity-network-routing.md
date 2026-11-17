@@ -75,6 +75,33 @@ generation after a restart. If it remains absent, compare the stored
 `fetchAvailableModels` response. Use only actual upstream model IDs when
 refreshing capabilities; subscription status alone does not establish access.
 
+## Interpret 429 responses separately from remaining quota
+
+A credential's positive `quotaInfo.remainingFraction` does not guarantee that
+every generation request will be accepted immediately. A generic upstream
+`429 RESOURCE_EXHAUSTED` does not identify the exact limiting resource. CPA's
+`reason=quota` cooldown label describes its routing state, not a fresh measurement
+that the account has zero remaining quota.
+
+On 2026-11-17, the two affected Argon credentials reported approximately 99.99%
+and 99.22% remaining while their generation requests had produced 429 responses.
+Minimal requests subsequently succeeded directly upstream, including a test with
+the original 64,000 output-token limit. This did not establish the output limit
+as the cause of the earlier failures.
+
+The deployment's routing strategy was changed from `fill-first` to `round-robin`
+to distribute requests across eligible credentials instead of concentrating new
+requests on the first eligible credential. Cooling and credential failover remain
+enabled. After direct generation was confirmed to work, the affected credential's
+cooldown was reset once using the management API. A native Gemini request through
+CPA then returned HTTP 200 and `OK` in approximately five seconds.
+
+Do not repeatedly clear cooldowns or disable cooling to force traffic through
+an upstream that continues returning 429. Successful minimal requests do not
+prove that a previous long conversation will succeed under concurrent load.
+Google documents capacity-dependent limits in its
+[Antigravity plans documentation](https://antigravity.google/docs/plans).
+
 ## Verify generation
 
 Verify the persisted setting, then test through CPA itself, rather than relying
