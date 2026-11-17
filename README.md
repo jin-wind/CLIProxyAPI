@@ -146,6 +146,7 @@ Full CLIProxyAPI management center with request-level monitoring and cost estima
 - Advanced (executors & translators): [docs/sdk-advanced.md](docs/sdk-advanced.md)
 - Access: [docs/sdk-access.md](docs/sdk-access.md)
 - Watcher: [docs/sdk-watcher.md](docs/sdk-watcher.md)
+- Antigravity network routing: [docs/antigravity-network-routing.md](docs/antigravity-network-routing.md)
 - Custom Provider Example: `examples/custom-provider`
 
 ## Contributing
