@@ -49,6 +49,32 @@ Setting this field on one credential limits the change to that credential. It
 does not configure another service or change the global routing strategy. Remove
 the override by updating `proxy_url` to an empty string through the same endpoint.
 
+## Route all CPA providers through one proxy
+
+For a deployment that should use the same proxy for all provider requests, set
+the v8 global request proxy in the private `config.yaml`:
+
+```yaml
+requests:
+  proxy-url: "socks5h://<encoded-user>:<encoded-password>@<proxy-host>:<proxy-port>"
+```
+
+Audit existing credential-level `proxy_url` values and configured provider
+overrides as well. They can override the global setting. In the affected
+deployment, the same proxy was explicitly applied to all 45 existing credential
+files, including credentials that remain disabled, so credential refresh and
+model discovery also have an explicit route. Empty provider-level proxy values
+retain the global fallback. No account was enabled by this change.
+
+Persist the configuration and restart CPA to replace existing upstream
+connections. Confirm that live provider connections reach the SOCKS5 endpoint.
+The HTTP listener can become ready before account-specific models finish
+registering. Wait until the requested model appears in `/v1/models` before testing
+generation after a restart. If it remains absent, compare the stored
+`antigravity_capability_hints.model_ids` against an authenticated upstream
+`fetchAvailableModels` response. Use only actual upstream model IDs when
+refreshing capabilities; subscription status alone does not establish access.
+
 ## Verify generation
 
 Verify the persisted setting, then test through CPA itself, rather than relying
